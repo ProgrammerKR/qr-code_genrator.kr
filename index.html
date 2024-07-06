@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator with Link Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+        #qrcode {
+            margin-top: 20px;
+        }
+        #printArea {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>QR Code Generator</h1>
+    <input type="text" id="text" placeholder="Enter text or URL">
+    <br><br>
+    <button onclick="generateQRCode()">Generate QR Code</button>
+  <br>
+    <button onclick="editQRCode()">Edit QR Code</button>
+  <br>
+    <button onclick="saveQRCode()">Save QR Code</button>
+  <br><br>
+    <div id="qrcode"></div>
+    <br><br>
+    <div id="link"></div>
+    <div id="editOptions" style="display: none;">
+        <label for="bgColor">Background Color:</label>
+        <input type="color" id="bgColor" value="#ffffff">
+        <label for="fgColor">Text Color:</label>
+        <input type="color" id="fgColor" value="#000000">
+        <button onclick="applyEdit()">Apply Changes</button>
+    </div>
+
+    <!-- Hidden div for print area -->
+    <div id="printArea"></div>
+
+    <!-- QRCode.js library from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+    <!-- jsPDF library from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <!-- html2canvas library from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        function generateQRCode() {
+            var text = document.getElementById('text').value;
+            var qrcodeDiv = document.getElementById('qrcode');
+            qrcodeDiv.innerHTML = "";
+            new QRCode(qrcodeDiv, {
+                text: text,
+                width: 128,
+                height: 128,
+                colorDark : "#000000",
+                colorLight : "#ffffff"
+            });
+
+            var linkDiv = document.getElementById('link');
+            linkDiv.innerHTML = "";
+            var link = document.createElement('a');
+            link.href = text;
+            link.textContent = text;
+            link.target = "_blank"; // Open link in a new tab
+            linkDiv.appendChild(link);
+        }
+
+        function editQRCode() {
+            document.getElementById('editOptions').style.display = 'block';
+        }
+
+        function applyEdit() {
+            var text = document.getElementById('text').value;
+            var bgColor = document.getElementById('bgColor').value;
+            var fgColor = document.getElementById('fgColor').value;
+            var qrcodeDiv = document.getElementById('qrcode');
+            qrcodeDiv.innerHTML = "";
+            new QRCode(qrcodeDiv, {
+                text: text,
+                width: 128,
+                height: 128,
+                colorDark : fgColor,
+                colorLight : bgColor
+            });
+
+            var linkDiv = document.getElementById('link');
+            linkDiv.innerHTML = "";
+            var link = document.createElement('a');
+            link.href = text;
+            link.textContent = text;
+            link.target = "_blank"; // Open link in a new tab
+            linkDiv.appendChild(link);
+
+            document.getElementById('editOptions').style.display = 'none';
+        }
+
+        async function saveQRCode() {
+            const { jsPDF } = window.jspdf;
+
+            // Generate QR Code if not already present
+            generateQRCode();
+
+            // Convert the QR Code div to canvas
+            const qrcodeDiv = document.getElementById('qrcode');
+            const canvas = await html2canvas(qrcodeDiv);
+
+            // Save as Image
+            const imgData = canvas.toDataURL("image/png");
+            const link = document.createElement('a');
+            link.href = imgData;
+            link.download = 'qrcode.png';
+            link.click();
+
+            // Save as PDF
+            const pdf = new jsPDF();
+            pdf.addImage(imgData, 'PNG', 15, 40, 180, 160);
+            pdf.save('qrcode.pdf');
+
+            // Show popup
+            alert("QR Code Saved as PDF and Image");
+        }
+    </script>
+</body>
+</html>
